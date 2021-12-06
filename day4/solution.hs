@@ -36,19 +36,23 @@ scoreCard draws card =
         lastNumberCalled = last draws
     in sum unmarkedNumbers * lastNumberCalled
 
-checkWin :: [Int] -> Int -> [[[Int]]] -> Int
-checkWin draws n cards =
-    if n > length draws then error "no winning cards" else
-    case catMaybes [check card (take n draws) | card <- cards] of
-        [] -> checkWin draws (n + 1) cards
-        (score : _) -> score
+onlyNewWins :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int)]
+onlyNewWins scores winningScores =
+    let winningCardIndices = map fst winningScores
+    in filter (\(index, _) -> index `notElem` winningCardIndices) scores
+
+checkWin :: [Int] -> Int -> [[[Int]]] -> [(Int, Int)] -> [(Int, Int)]
+checkWin draws n cards winningScores =
+    if n > length draws then winningScores else
+    let scores = catMaybes [check card index (take n draws) | (index, card) <- zip [0..] cards]
+    in checkWin draws (n + 1) cards (winningScores ++ onlyNewWins scores winningScores)
     where
-        check card currentDraws =
-            if cardWins currentDraws card then Just (scoreCard currentDraws card) else Nothing
+        check card index currentDraws =
+            if cardWins currentDraws card then Just (index, scoreCard currentDraws card) else Nothing
 
 main :: IO ()
 main = do
     input <- getContents
     case parse drawsAndCards "(source)" (pack input) of
         Left error -> putStr $ show error
-        Right (draws, cards) -> putStr $ show $ checkWin draws 5 cards
+        Right (draws, cards) -> putStr $ show $ checkWin draws 5 cards []
