@@ -27,8 +27,12 @@ toCoords :: [((Int, Int), (Int, Int))] -> [(Int, Int)]
 toCoords = concatMap fillIn
     where
         fillIn ((x1, y1), (x2, y2))
-            | x1 == x2 = map (x1,) (if y2 > y1 then [y1..y2] else [y2..y1])
-            | y1 == y2 = map (,y1) (if x2 > x1 then [x1..x2] else [x2..x1])
+            | x1 == x2 = map (x1,) (if y2 > y1 then [y1..y2] else [y2..y1]) -- vertical
+            | y1 == y2 = map (,y1) (if x2 > x1 then [x1..x2] else [x2..x1]) -- horizontal
+            | x1 < x2 && y1 < y2 = map (\i -> (x1 + i, y1 + i)) [0..x2 - x1] -- down and to the right
+            | x1 < x2 && y1 > y2 = map (\i -> (x1 + i, y1 - i)) [0..x2 - x1] -- up and to the right
+            | x1 > x2 && y1 < y2 = map (\i -> (x1 - i, y1 + i)) [0..x1 - x2] -- down and to the left
+            | x1 > x2 && y1 > y2 = map (\i -> (x1 - i, y1 - i)) [0..x1 - x2] -- up and to the left
         fillIn r = []
 
 countOverlaps :: [((Int, Int), (Int, Int))] -> Int
