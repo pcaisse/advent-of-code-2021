@@ -2,26 +2,31 @@ import Text.Parsec
 import Text.Parsec.Text (Parser)
 import Data.Text (pack)
 import Data.Char (digitToInt)
+import Data.List
+
+type Counts = (Int, Int, Int, Int, Int, Int, Int, Int, Int)
 
 fish :: Parser [Int]
 fish = fmap digitToInt digit `sepBy` char ','
 
-newDay :: [Int] -> [Int]
-newDay fishes =
-    let numReproducingFish = length $ filter (== 0) fishes
-        newFish = replicate numReproducingFish 8
-    in map nextFish fishes ++ newFish
-    where
-        nextFish 0 = 6
-        nextFish x = x - 1
+newDay :: Counts -> Counts
+newDay (i0, i1, i2, i3, i4, i5, i6, i7, i8) = (i1, i2, i3, i4, i5, i6, i7 + i0, i8, i0)
 
-simulate :: [Int] -> Int -> [Int]
-simulate fishes 0 = fishes
-simulate fishes days = simulate (newDay fishes) (days - 1)
+simulate :: Counts -> Int -> Int
+simulate (i0, i1, i2, i3, i4, i5, i6, i7, i8) 0 = i0 + i1 + i2 + i3 + i4 + i5 + i6 + i7 + i8
+simulate counts days = simulate (newDay counts) (days - 1)
+
+fishCounts :: [Int] -> Counts
+fishCounts fishes =
+    let counts = length <$> (group . sort) fishes
+        indexedCounts = [0] ++ counts ++ replicate (8 - length counts) 0
+    in case indexedCounts of
+        [i0, i1, i2, i3, i4, i5, i6, i7, i8] -> (i0, i1, i2, i3, i4, i5, i6, i7, i8)
+        _ -> error "something went wrong"
 
 main :: IO ()
 main = do
     input <- getContents
     case parse (fish <* newline) "(source)" (pack input) of
         Left error -> putStr $ show error
-        Right fishes -> putStr $ show $ length $ simulate fishes 80
+        Right fishes -> putStr $ show $ simulate (fishCounts fishes) 256
