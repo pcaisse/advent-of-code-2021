@@ -7,14 +7,15 @@ import Data.List
 crabs :: Parser [Int]
 crabs = fmap read (many digit) `sepBy` char ','
 
-median :: [Int] -> Int
-median sortedLs = sortedLs !! (length sortedLs `div` 2)
+average xs = floor $ realToFrac (sum xs) / genericLength xs
 
 fuel :: [Int] -> Int
 fuel crabs =
-    let sortedCrabs = sort crabs
-        med = median sortedCrabs
-    in sum $ map (\pos -> abs $ pos - med) sortedCrabs
+    let avg = average crabs
+        dists = map (\pos -> sum [1..dist pos avg]) crabs
+    in sum dists
+    where
+        dist a b = abs (a - b)
 
 main :: IO ()
 main = do
